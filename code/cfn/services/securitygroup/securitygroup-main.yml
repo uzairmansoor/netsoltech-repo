@@ -1,0 +1,46 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: Driver template to deploy the VPC security groups
+Parameters:
+  project:
+    Type: String
+    Default: netsoltech
+    Description:  Project Name 
+  env:
+    Type: String
+    Default: stage
+    AllowedValues: [prod, dev, qa, stage]
+    Description:  Environment Name
+  app:
+    Type: String
+    Default: app
+    Description: Name of the app
+  s3ArtifactPath:
+    Type: String
+    Default: "https://netsoltech-stage-us-east-1-339713058918.s3.amazonaws.com/code/cfn/services"
+    Description: "Artifact bucket path"
+
+Resources:
+  securityGroup:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: !Sub "${s3ArtifactPath}/securitygroup/securitygroup-app.yml"
+      Parameters:
+        project: !Ref project
+        env: !Ref env
+        vpcId: !GetAtt vpc.Outputs.vpcId
+        sgInternetTrafficIngressCidr: 0.0.0.0/0
+        sgInternetTrafficEgressCidr: 0.0.0.0/0
+        sgSshPort: 22
+        sgHttpsPort: 443
+        sgHttpPort: 80
+        sgRdsPort: 3306
+        sgAllowAllEgressProtocol: -1
+        netsolCidrIp: 45.64.183.177/32
+
+Outputs:
+  securityGroup:
+    Value: !Ref securityGroup
+    Export:
+      Name: !Sub "${project}-${env}-${app}-securitygroup-${AWS::Region}"
+  
+

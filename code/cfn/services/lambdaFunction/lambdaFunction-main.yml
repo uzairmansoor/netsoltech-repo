@@ -1,0 +1,163 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: "Driver Template to deploy lambda functions"
+
+Parameters:
+  project:
+    Type: String
+    Default: netsoltech
+    Description: Project Name
+  env:
+    Type: String
+    Default: stage
+    AllowedValues: [prod, dev, qa, stage]
+    Description:  Environment Name
+  s3ArtifactPath:
+    Type: String
+    Default: "https://netsoltech-stage-us-east-1-339713058918.s3.amazonaws.com/code/cfn/services"
+    Description: "Artifact Bucket path"
+
+Resources:
+  customAlarmsLambdaFunc:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: !Sub "${s3ArtifactPath}/lambdaFunction/lambdaFunction-app.yml"
+      Parameters:
+        project: !Ref project
+        env: !Ref env
+        lambdaFunctionName: !Sub "${project}-${env}-${app}-updateCustomAlarms-${AWS::Region}"
+        runtimeVersion: python3.10
+        lambdaHandler: updateCustomCloudWatchAlarms.lambda_handler
+        timeout: 30
+        lambdaExecutionRoleArn: !GetAtt iamRoles.Outputs.lambdaRoleForCustomAlarmsArn
+        s3BucketName: !Sub "${project}-${env}-${app}-artifacts-${AWS::Region}-${AWS::AccountId}"
+        s3Key: updateCustomCloudWatchAlarms.zip
+        launchTemplateName: !Sub "${project}-${env}-${app}-LaunchTemplatetestASG"
+        instanceIdsParamStore: !Sub "${project}-${env}-${app}-instanceIdParamStore-${AWS::Region}"
+        memMetricName: mem_used_percent
+        diskMetricName: disk_used_percent
+        asgName: !Sub "${project}-${env}-${app}-AutoScalingGroup"
+        scaleInPolicyName: !Sub "${project}-${env}-${app}-cpuScaleInStepScalingPolicy"
+        freeMemMetricName: stag_free_mem_ec2
+        freeMemScaleInStepScalingPolicyArn: !GetAtt ec2Autoscaling.Outputs.freeMemScaleInStepScalingPolicyArn
+        freeMemScaleOutStepScalingPolicyArn: !GetAtt ec2Autoscaling.Outputs.freeMemScaleOutStepScalingPolicyArn
+        snsTopicArn: !GetAtt snsTopicForCwAlarms.Outputs.snsTopicArn
+  
+  createAmiLambdaFunc:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: !Sub "${s3ArtifactPath}/lambdaFunction/lambdaFunction-app.yml"
+      Parameters:
+        project: !Ref project
+        env: !Ref env
+        lambdaFunctionName: !Sub "${project}-${env}-${app}-createAmi-${AWS::Region}"
+        runtimeVersion: python3.10
+        lambdaHandler: createAmi.lambda_handler
+        timeout: 30
+        lambdaExecutionRoleArn: !GetAtt iamRoles.Outputs.lambdaRoleForCreateAmiFunctionArn
+        s3BucketName: !Sub "${project}-${env}-${app}-artifacts-${AWS::Region}-${AWS::AccountId}"
+        s3Key: createAmi.zip
+        launchTemplateName: !Sub "${project}-${env}-${app}-LaunchTemplatetestASG"
+        instanceIdsParamStore: !Sub "${project}-${env}-${app}-instanceIdParamStore-${AWS::Region}"
+        diskMetricName: DiskUtilization
+        asgName: !Sub "${project}-${env}-${app}-AutoScalingGroup"
+        scaleInPolicyName: !Sub "${project}-${env}-${app}-cpuScaleInStepScalingPolicy"
+        freeMemMetricName: stag_free_mem_ec2
+        freeMemScaleInStepScalingPolicyArn: !GetAtt ec2Autoscaling.Outputs.freeMemScaleInStepScalingPolicyArn
+        freeMemScaleOutStepScalingPolicyArn: !GetAtt ec2Autoscaling.Outputs.freeMemScaleOutStepScalingPolicyArn
+        snsTopicArn: !GetAtt snsTopicForCwAlarms.Outputs.snsTopicArn
+
+  updateAsgLaunchTemplateLambdaFunc:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: !Sub "${s3ArtifactPath}/lambdaFunction/lambdaFunction-app.yml"
+      Parameters:
+        project: !Ref project
+        env: !Ref env
+        lambdaFunctionName: !Sub "${project}-${env}-${app}-updateAsgLaunchTemplate-${AWS::Region}"
+        runtimeVersion: python3.10
+        lambdaHandler: updateAsgLaunchTemplate.lambda_handler
+        timeout: 30
+        lambdaExecutionRoleArn: !GetAtt iamRoles.Outputs.lambdaRoleForAsgLaunchTemplateArn
+        s3BucketName: !Sub "${project}-${env}-${app}-artifacts-${AWS::Region}-${AWS::AccountId}"
+        s3Key: updateAsgLaunchTemplate.zip
+        launchTemplateName: !Sub "${project}-${env}-${app}-LaunchTemplatetestASG"
+        memMetricName: mem_used_percent
+        instanceIdsParamStore: !Sub "${project}-${env}-${app}-instanceIdParamStore-${AWS::Region}"
+        diskMetricName: disk_used_percent
+        asgName: !Sub "${project}-${env}-${app}-AutoScalingGroup"
+        scaleInPolicyName: !Sub "${project}-${env}-${app}-cpuScaleInStepScalingPolicy"
+        freeMemMetricName: stag_free_mem_ec2
+        freeMemScaleInStepScalingPolicyArn: !GetAtt ec2Autoscaling.Outputs.freeMemScaleInStepScalingPolicyArn
+        freeMemScaleOutStepScalingPolicyArn: !GetAtt ec2Autoscaling.Outputs.freeMemScaleOutStepScalingPolicyArn
+        snsTopicArn: !GetAtt snsTopicForCwAlarms.Outputs.snsTopicArn
+
+  triggerScaleInAsgLambdaFunc:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: !Sub "${s3ArtifactPath}/lambdaFunction/lambdaFunction-app.yml"
+      Parameters:
+        project: !Ref project
+        env: !Ref env
+        lambdaFunctionName: !Sub "${project}-${env}-${app}-triggerScaleInAsg-${AWS::Region}"
+        runtimeVersion: python3.10
+        lambdaHandler: triggerScaleInAsg.lambda_handler
+        timeout: 30
+        lambdaExecutionRoleArn: !GetAtt iamRoles.Outputs.lambdaRoleForTriggerScaleInAsgFuncArn
+        s3BucketName: !Sub "${project}-${env}-${app}-artifacts-${AWS::Region}-${AWS::AccountId}"
+        s3Key: triggerScaleInAsg.zip
+        launchTemplateName: !Sub "${project}-${env}-${app}-LaunchTemplateforASG"
+        instanceIdsParamStore: !Sub "${project}-${env}-${app}-instanceIdParamStore-${AWS::Region}"
+        memMetricName: mem_used_percent
+        diskMetricName: disk_used_percent
+        asgName: !Sub "${project}-${env}-${app}-AutoScalingGroup"
+        scaleInPolicyName: !Sub "${project}-${env}-${app}-cpuScaleInStepScalingPolicy"
+        freeMemMetricName: stag_free_mem_ec2
+        freeMemScaleInStepScalingPolicyArn: !GetAtt ec2Autoscaling.Outputs.freeMemScaleInStepScalingPolicyArn
+        freeMemScaleOutStepScalingPolicyArn: !GetAtt ec2Autoscaling.Outputs.freeMemScaleOutStepScalingPolicyArn
+        snsTopicArn: !GetAtt snsTopicForCwAlarms.Outputs.snsTopicArn
+  
+  rdsStartStopLambdaFunction:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: !Sub "${s3ArtifactPath}/lambdaFunction/lambdaFunction-app.yml"
+      Parameters:
+        project: !Ref project
+        env: !Ref env
+        lambdaFunctionName: !Sub "${project}-${env}-${app}-triggerScaleInAsg-${AWS::Region}"
+        runtimeVersion: python3.10
+        lambdaHandler: startstoprds.lambda_handler
+        timeout: 30
+        lambdaExecutionRoleArn: !GetAtt iamRoles.Outputs.rdsStartStopIamRoleArn
+        s3BucketName: cloudweb-stag-artifacts-us-east-1-770760105158
+        s3Key: code/lambda/rdsStartStop/rdsStartStop.zip
+        launchTemplateName: !Sub "${project}-${env}-${app}-LaunchTemplateforASG"
+        instanceIdsParamStore: !Sub "${project}-${env}-${app}-instanceIdParamStore-${AWS::Region}"
+        diskMetricName: disk_used_percent
+        asgName: !Sub "${project}-${env}-${app}-AutoScalingGroup"
+        scaleInPolicyName: !Sub "${project}-${env}-${app}-cpuScaleInStepScalingPolicy"
+        freeMemMetricName: !Sub "${env}_free_mem_ec2"
+        freeMemScaleInStepScalingPolicyArn: !GetAtt ec2Autoscaling.Outputs.freeMemScaleInStepScalingPolicyArn
+        freeMemScaleOutStepScalingPolicyArn: !GetAtt ec2Autoscaling.Outputs.freeMemScaleOutStepScalingPolicyArn
+        snsTopicArn: !GetAtt snsTopicForCwAlarms.Outputs.snsTopicArn
+
+Outputs:
+  customAlarmsLambdaFunc:
+    Value: !Ref customAlarmsLambdaFunc
+    Export:
+      Name: !Sub '${project}-${env}-customAlarmsLambdaFuncStack-${AWS::Region}' 
+  createAmiLambdaFunc:
+    Value: !Ref createAmiLambdaFunc
+    Export:
+      Name: !Sub '${project}-${env}-createAmiLambdaFuncStack-${AWS::Region}'  
+  updateAsgLaunchTemplateLambdaFunc:
+    Value: !Ref updateAsgLaunchTemplateLambdaFunc
+    Export:
+      Name: !Sub '${project}-${env}-updateAsgLaunchTemplateLambdaFuncStack-${AWS::Region}'
+  triggerScaleInAsgLambdaFunc:
+    Value: !Ref triggerScaleInAsgLambdaFunc
+    Export:
+      Name: !Sub '${project}-${env}-triggerScaleInAsgLambdaFuncStack-${AWS::Region}'
+  rdsStartStopLambdaFunc:
+    Value: !Ref rdsStartStopLambdaFunc
+    Export:
+      Name: !Sub "${project}-${env}-${app}-rdsStartStopLambdaFuncStack-${AWS::Region}"

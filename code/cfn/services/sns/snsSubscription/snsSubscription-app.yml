@@ -1,0 +1,39 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: Driver template to create sns topic and subscription
+Parameters:
+  project:
+    Type: String
+    Default: netsoltech
+    Description:  Project Name
+  env:
+    Type: String
+    Default: stage
+    AllowedValues: [prod, dev, qa, stage]
+    Description:  Environment Name
+  endpoint:
+    Type: String
+    Description: Targeted subscription's endpoint
+  protocol:
+    Type: String
+    AllowedValues: ['http','https','email','email-json','sms','sqs','application','lambda','firehose']
+    Description: The subscription's protocol
+  snsTopicArn:
+    Type: String
+    Description: Arn of an SNS topic
+  snsSubscripExportName:
+    Type: String
+    Description: Export name of subscription
+
+Resources:  
+  snsSubscription:
+    Type: AWS::SNS::Subscription
+    Properties:
+      Endpoint: !Ref endpoint
+      Protocol: !Ref protocol
+      TopicArn: !Ref snsTopicArn
+
+Outputs:
+  snsSubscriptionArn:
+    Value: !Ref snsSubscription
+    Export:
+      Name: !Sub "${project}-${env}-${app}-${snsSubscripExportName}-${AWS::Region}"

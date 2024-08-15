@@ -1,0 +1,45 @@
+AWSTemplateFormatVersion: "2010-09-09" 
+Description: 'Driver template to deploy IAM roles'
+Parameters:
+  project:
+    Type: String
+    Default: netsoltech
+    Description:  Project Name
+  env:
+    Type: String
+    Default: stage
+    AllowedValues: [prod, dev, qa, stage]
+    Description:  Environment Name
+  app:
+    Type: String
+    Default: app
+    Description: Name of the app
+  s3ArtifactPath:
+    Type: String
+    Default: "https://netsoltech-stage-us-east-1-339713058918.s3.amazonaws.com/code/cfn/services"
+    Description: "Artifact bucket path"
+
+Resources:
+  iamRoles:
+    Type: AWS::CloudFormation::Stack
+    DependsOn:
+      - s3ArtifactsBucket
+      - freeMemSsmDocument
+      - ssmParameterStore
+    Properties:
+      TemplateURL: !Sub "${s3ArtifactPath}/iamRoles/iamRoles-app.yml"
+      Parameters:
+        project: !Ref project
+        env: !Ref env
+        s3ArtifactsBucketArn: !GetAtt s3ArtifactsBucket.Outputs.s3BucketArn
+        freeMemSsmDocumentName: !GetAtt freeMemSsmDocument.Outputs.freeMemSsmDocumentName
+        instanceIdsParamStoreName: !GetAtt ssmParameterStore.Outputs.instanceIdsParamStoreName
+        dbName: !Sub "${project}-${env}-${app}-db-${AWS::Region}"
+        asgName: !Sub "${project}-${env}-${app}-AutoScalingGroup"
+
+Outputs:
+  iamRoles:
+    Value: !Ref iamRoles
+    Export:
+      Name: !Sub "${project}-${env}-${app}-iamRolesStack-${AWS::Region}"
+ 

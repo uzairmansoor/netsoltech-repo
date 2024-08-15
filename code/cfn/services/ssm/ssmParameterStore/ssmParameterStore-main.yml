@@ -1,0 +1,35 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: 'Driver template to deploy the SSM parameter store'
+Parameters:
+  project:
+    Type: String
+    Default: netsoltech
+    Description:  Project Name
+  env:
+    Type: String
+    Default: stage
+    AllowedValues: [prod, dev, qa, stage]
+    Description:  Environment Name
+  app:
+    Type: String
+    Default: app
+    Description: Name of the app
+  s3ArtifactPath:
+    Type: String
+    Default: "https://netsoltech-stage-us-east-1-339713058918.s3.amazonaws.com/code/cfn/services"
+    Description: "Artifact Bucket path"
+
+Resources:
+  ssmParameterStore:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: !Sub "${s3ArtifactPath}/ssmParameterStore/ssmParameterStore-app.yml"
+      Parameters:
+        project: !Ref project
+        env: !Ref env
+
+Outputs:
+  ssmParameterStore:
+    Value: !Ref ssmParameterStore
+    Export:
+      Name: !Sub "${project}-${env}-${app}-ssmParameterStoreStack-${AWS::Region}"

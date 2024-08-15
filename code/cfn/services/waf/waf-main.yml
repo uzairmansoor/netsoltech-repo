@@ -1,0 +1,54 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: Cfn driver template to deploy WAF
+Parameters:
+  project:
+    Type: String
+    Default: netsoltech
+    Description: Project name
+  env:
+    Type: String
+    Default: stag
+    AllowedValues: [prod, dev, qa, stag]
+    Description: Environment name
+  s3ArtifactPath:
+    Type: String
+    Default: "https://netsoltech-stage-us-east-1-339713058918.s3.amazonaws.com/code/cfn/services"
+    Description: Artifact bucket path
+
+Resources:
+  wafWebAcl:
+    Type: AWS::CloudFormation::Stack
+    DependsOn:
+      - cloudWebApplicationLoadBalancer
+    Properties:
+      TemplateURL: !Sub "${s3ArtifactPath}/waf/waf-app.yml"
+      Parameters:
+        project: !Ref project
+        env: !Ref env
+        wafIpSetScope: REGIONAL
+        wafNetsolCidrRange1: 45.64.183.0/24
+        wafNetsolCidrRange2: 221.120.213.0/24
+        wafZahidHomeIp: 137.59.230.131/32
+        wafWebAclName: !Sub "${project}-${env}-${app}-wafWebAcl-${AWS::Region}"
+        wafWebAclDescription: "Web ACL for Application Load Balancer"
+        wafWebAclScope: "REGIONAL"
+        wafEnableSqlInjectionRule: true
+        wafEnableCrossSiteScriptingRule: true
+        wafEnableAmazonIpDdosProtectionRule: true
+        wafEnableCoreRuleSet: true
+        wafEnableKnownBadInputsRuleSet: true
+        wafEnableLinuxRuleSet: true
+        wafEnablePHPRuleSet: true
+        wafEnableSQLiRuleSet: true
+        wafEnableWordPressRuleSet: true 
+        wafEnableAdminProtectionRuleSet: true
+        applicationLoadBalancerArn: !GetAtt cloudWebApplicationLoadBalancer.Outputs.loadBalancerArn
+        wafEnableWpLoginUrlProtectionRuleSet: true
+        wafWordpressLoginString: wp-login
+        wafWordpressAdminString: wp-admin
+
+Outputs:
+  wafWebAcl:
+    Value: !Ref wafWebAcl
+    Export: 
+      Name: !Sub "${project}-${env}-${app}-wafStack-${AWS::Region}"

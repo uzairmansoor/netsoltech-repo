@@ -1,0 +1,110 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: 'Template to deploy the SSM parameter store'
+
+Parameters:
+  project:
+    Type: String
+    Default: netsoltech
+    Description:  Project Name
+  env:
+    Type: String
+    Default: stage
+    AllowedValues: [prod, dev, qa, stage]
+    Description:  Environment Name
+  app:
+    Type: String
+    Default: app
+    Description: Name of the app
+  amiId:
+    Type: String
+    Description:  Base AMI Id of an EC2
+
+Resources:
+  
+  memUtilSSMParamStore:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Name: !Sub "${project}-${env}-${app}-memUtilSSMParamStore-${AWS::Region}"
+      Type: String
+      Value: |
+        {
+                "agent": {
+                        "metrics_collection_interval": 60
+                },
+                "metrics": {
+                        "append_dimensions": {
+                                "AutoScalingGroupName": "${aws:AutoScalingGroupName}"
+                        },
+                        "aggregation_dimensions" : [["AutoScalingGroupName"]],
+                        "metrics_collected": {
+                                "mem": {
+                                        "measurement": [
+                                                 {"name": "mem_used_percent", "rename": "MemoryUtilization", "unit": "Percent"}
+                                        ],
+                                        "metrics_collection_interval": 60
+                                }
+                        }
+                }
+        }
+
+  diskUtilSSMParamStore:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Name: !Sub "${project}-${env}-${app}-diskUtilSSMParamStore-${AWS::Region}"
+      Type: String
+      Value: |
+        {
+                "agent": {
+                        "metrics_collection_interval": 60
+                },
+                "metrics": {
+                        "append_dimensions": {
+                                "AutoScalingGroupName": "${aws:AutoScalingGroupName}"
+                        },
+                        "aggregation_dimensions" : [["AutoScalingGroupName"]],
+                        "metrics_collected": {
+                                "disk": {
+                                        "measurement": [
+                                                 {"name": "used_percent", "rename": "DiskUtilization", "unit": "Percent"}
+                                        ],
+                                        "metrics_collection_interval": 60
+                                }
+                        }
+                }
+        }
+  
+  instanceIdsParamStore:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Name: !Sub "${project}-${env}-${app}-instanceIdParamStore-${AWS::Region}"
+      Type: StringList
+      Value: "i-123xyz,i-321xyz"
+
+  amiIdParamStore:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Name: !Sub "${project}-${env}-${app}-amiIdParamStore-${AWS::Region}"
+      Type: String
+      Value: !Ref amiId
+
+Outputs:
+  memUtilSSMParamStoreName:
+    Value: !Ref memUtilSSMParamStore
+    Export:
+      Name: !Sub "${project}-${env}-${app}-memUtilSSMParamStoreName-${AWS::Region}"
+  diskUtilSSMParamStoreName:
+    Value: !Ref diskUtilSSMParamStore
+    Export:
+      Name: !Sub "${project}-${env}-${app}-diskUtilSSMParamStoreName-${AWS::Region}"
+  instanceIdsParamStoreName:
+    Value: !Ref instanceIdsParamStore
+    Export:
+      Name: !Sub "${project}-${env}-${app}-instanceIdsParamStoreName-${AWS::Region}"
+  amiIdParamStoreName:
+    Value: !Ref amiIdParamStore
+    Export:
+      Name: !Sub "${project}-${env}-${app}-amiIdParamStoreName-${AWS::Region}"
+  amiIdParamStoreValue:
+    Value: !GetAtt amiIdParamStore.Value
+    Export:
+      Name: !Sub "${project}-${env}-${app}-amiIdParamStoreValue-${AWS::Region}"

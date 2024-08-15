@@ -1,0 +1,35 @@
+                                    Stage Environment
+
+aws s3 sync . s3://netsoltech-stage-us-east-1-339713058918
+
+aws cloudformation validate-template --template-body file://code/cfn/stacks/stage/main.yml
+
+aws cloudformation create-stack --stack-name netsoltech-stage --template-body file://code/cfn/stacks/stage/main.yml --region us-east-1 --capabilities CAPABILITY_NAMED_IAM
+
+aws cloudformation update-stack --stack-name netsoltech-stage --template-body file://code/cfn/stacks/stage/main.yml --region us-east-1 --capabilities CAPABILITY_NAMED_IAM
+
+aws cloudformation delete-stack --stack-name netsoltech-stage --region us-east-1
+
+                                    Dev Environment
+
+aws s3 sync . s3://cloudweb-wordpress-dev-us-west-1-770760105158 --profile AWSAdministratorAccess-770760105158
+
+aws cloudformation validate-template --template-body file://code/cfn/stacks/dev/main.yml
+
+aws cloudformation create-stack --stack-name cloudweb-dev-us-west-1 --template-body file://code/cfn/stacks/dev/main.yml --profile AWSAdministratorAccess-770760105158 --region us-west-1 --capabilities CAPABILITY_NAMED_IAM --parameters ParameterKey=dBPassword,ParameterValue=netsol123user ParameterKey=dBUsername,ParameterValue=netsoluser
+
+aws cloudformation update-stack --stack-name cloudweb-dev-us-west-1 --template-body file://code/cfn/stacks/dev/main.yml --profile AWSAdministratorAccess-770760105158 --region us-west-1 --capabilities CAPABILITY_NAMED_IAM --parameters ParameterKey=dBPassword,ParameterValue=netsol123user ParameterKey=dBUsername,ParameterValue=netsoluser
+
+aws cloudformation delete-stack --stack-name cloudweb-dev-us-west-1 --profile AWSAdministratorAccess-770760105158 --region us-west-1
+
+                                    Prod Environment
+
+aws s3 sync . s3://cloudweb-wordpress-prod-us-east-1-770760105158 --profile AWSAdministratorAccess-770760105158
+
+aws cloudformation validate-template --template-body file://code/cfn/stacks/prod/main.yml
+
+aws cloudformation create-stack --stack-name cloudweb-prod --template-body file://code/cfn/stacks/prod/main.yml --profile AWSAdministratorAccess-770760105158 --region us-east-1 --capabilities CAPABILITY_NAMED_IAM --parameters ParameterKey=dBPassword,ParameterValue=cloudservices ParameterKey=dBUsername,ParameterValue=devteamuser
+
+aws cloudformation update-stack --stack-name cloudweb-prod --template-body file://code/cfn/stacks/prod/main.yml --profile AWSAdministratorAccess-770760105158 --region us-east-1 --capabilities CAPABILITY_NAMED_IAM --parameters ParameterKey=dBPassword,ParameterValue=cloudservices ParameterKey=dBUsername,ParameterValue=devteamuser
+
+aws cloudformation delete-stack --stack-name cloudweb-prod --profile AWSAdministratorAccess-770760105158 --region us-east-1
