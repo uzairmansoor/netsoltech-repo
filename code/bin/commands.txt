@@ -1,6 +1,6 @@
                                     Stage Environment
 
-aws s3 sync . s3://netsoltech-stage-us-east-1-339713058918
+aws s3 sync . s3://netsoltech-stage-us-east-1-339713058918 --exclude ".git/*" --exclude "LICENSE" --exclude "README.md"
 
 aws cloudformation validate-template --template-body file://code/cfn/stacks/stage/main.yml
 

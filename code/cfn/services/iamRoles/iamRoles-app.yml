@@ -282,7 +282,7 @@ Resources:
   lambdaRoleForUpdateInstanceIdFunction: 
     Type: "AWS::IAM::Role"
     Properties:
-      RoleName: !Sub "${project}-${env}-${app}-lambdaRoleForUpdateInstanceIdFunction-${AWS::Region}"
+      RoleName: !Sub "${project}-${env}-${app}-lambdaRoleForUpdateInstanceId-${AWS::Region}"
       AssumeRolePolicyDocument:
         Version: "2012-10-17"
         Statement: 
@@ -333,7 +333,7 @@ Resources:
                 Resource: !Sub "arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/*"
       Tags:
           - Key: Name
-            Value: !Sub "${project}-${env}-${app}-lambdaRoleForUpdateInstanceIdFunction-${AWS::Region}"
+            Value: !Sub "${project}-${env}-${app}-lambdaRoleForUpdateInstanceId-${AWS::Region}"
           - Key: project
             Value: !Ref project
           - Key: environment
@@ -342,7 +342,7 @@ Resources:
   lambdaRoleForCreateAmiFunction: 
     Type: "AWS::IAM::Role"
     Properties:
-      RoleName: !Sub "${project}-${env}-${app}-lambdaRoleForCreateAmiFunction-${AWS::Region}"
+      RoleName: !Sub "${project}-${env}-${app}-lambdaRoleForCreateAmi-${AWS::Region}"
       AssumeRolePolicyDocument:
         Version: "2012-10-17"
         Statement: 
