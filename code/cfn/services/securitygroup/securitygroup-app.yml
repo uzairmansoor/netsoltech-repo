@@ -39,6 +39,10 @@ Parameters:
     Type: String
     Default: 3306
     Description: RDS connection port
+  sgNuxtWebAppPort:
+    Type: String
+    Default: 3000
+    Description: Nuxt js application connection port
   sgAllowAllEgressProtocol:
     Type: String
     Default: -1
@@ -48,6 +52,37 @@ Parameters:
     Description: CIDR IP of netsol domain
 
 Resources:
+  sgEc2ConnectEndpoint:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      VpcId: !Ref vpcId
+      GroupDescription: Security group to allow traffic on TCP port 22
+      Tags:
+        - Key: Name
+          Value: !Sub "${project}-${env}-${app}-sgEc2ConnectEndpoint-${AWS::Region}"
+        - Key: project
+          Value: !Ref project
+        - Key: environment
+          Value: !Ref env
+        - Key: app
+          Value: !Ref app 
+  sgEc2ConnectEndpointSShIngress:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      GroupId: !Ref sgEc2ConnectEndpoint
+      Description: Allow SSh traffic
+      IpProtocol: tcp
+      FromPort: !Ref sgSshPort
+      ToPort: !Ref sgSshPort
+      CidrIp: !Ref netsolCidrIp
+  sgEc2ConnectEndpointEgress:
+    Type: AWS::EC2::SecurityGroupEgress
+    Properties:
+      GroupId: !Ref sgEc2ConnectEndpoint
+      Description: Allow all traffic
+      IpProtocol: !Ref sgAllowAllEgressProtocol
+      CidrIp: !Ref sgInternetTrafficEgressCidr
+
   sgBastionHost:
     Type: AWS::EC2::SecurityGroup
     Properties:
@@ -107,6 +142,15 @@ Resources:
       FromPort: !Ref sgHttpPort
       ToPort: !Ref sgHttpPort
       CidrIp: !Ref sgInternetTrafficIngressCidr
+  sgPublicNuxtWebAppIngress:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      GroupId: !Ref sgPublicAlb
+      Description: Allow nuxt js application traffic
+      IpProtocol: tcp
+      FromPort: !Ref sgNuxtWebAppPort
+      ToPort: !Ref sgNuxtWebAppPort
+      SourceSecurityGroupId: !Ref sgPublicAlb
   sgPublicAlbEgress:
     Type: AWS::EC2::SecurityGroupEgress
     Properties:
@@ -155,7 +199,7 @@ Resources:
       IpProtocol: tcp
       FromPort: !Ref sgSshPort
       ToPort: !Ref sgSshPort
-      SourceSecurityGroupId: !Ref sgBastionHost
+      SourceSecurityGroupId: !Ref sgEc2ConnectEndpoint
   sgEc2DbIngress:
     Type: AWS::EC2::SecurityGroupIngress
     Properties:
@@ -165,6 +209,15 @@ Resources:
       FromPort: !Ref sgRdsPort
       ToPort: !Ref sgRdsPort
       SourceSecurityGroupId: !Ref sgRds
+  sgEc2NuxtWebAppIngress:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      GroupId: !Ref sgEc2Web
+      Description: Allow nuxt js application traffic
+      IpProtocol: tcp
+      FromPort: !Ref sgNuxtWebAppPort
+      ToPort: !Ref sgNuxtWebAppPort
+      SourceSecurityGroupId: !Ref sgPublicAlb
   sgEc2WebEgress:
     Type: AWS::EC2::SecurityGroupEgress
     Properties:
@@ -202,6 +255,10 @@ Resources:
       CidrIp: !Ref sgInternetTrafficEgressCidr
   
 Outputs:
+  sgEc2ConnectEndpoint:
+    Value: !Ref sgEc2ConnectEndpoint
+    Export:
+      Name: !Sub "${project}-${env}-${app}-sgEc2ConnectEndpoint-${AWS::Region}"
   sgBastionHost:
     Value: !Ref sgBastionHost
     Export:

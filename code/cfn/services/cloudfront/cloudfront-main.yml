@@ -10,6 +10,10 @@ Parameters:
     Default: stage
     AllowedValues: [prod, dev, qa, stage]
     Description:  Environment Name
+  app:
+    Type: String
+    Default: app
+    Description: Name of the app
   s3ArtifactPath:
     Type: String
     Default: "https://netsoltech-stage-us-east-1-339713058918.s3.amazonaws.com/code/cfn/services"

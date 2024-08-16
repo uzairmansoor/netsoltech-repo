@@ -66,6 +66,10 @@ Parameters:
     Type: String
     Default: 80
     Description: Http port on which the load balancer is listening
+  lbNuxtWebAppPort: 
+    Type: String
+    Default: 3000
+    Description: The port on which the application is runing
   ipAddressType: 
     Type: String
     Default: ipv4
@@ -110,9 +114,9 @@ Parameters:
     Type: String
     Default: true
     Description: Select true to enable access logs of an ALB otherwise false
-  # s3BucketNameForAccessLogs:
-  #   Type: String
-  #   Description: Name of the S3 bucket for the access logs
+  s3BucketNameForAccessLogs:
+    Type: String
+    Description: Name of the S3 bucket for the access logs
   prefixOfS3BucketForAccessLogs:
     Type: String
     Description: Prefix for the location in the S3 bucket for the access logs
@@ -127,22 +131,22 @@ Resources:
       Name: !Ref loadBalancerName
       Scheme: !Ref loadBalancerScheme
       Type: !Ref loadBalancerType
-      # LoadBalancerAttributes:
-      #   - !If
-      #     - isEnableAccessLogs
-      #     - Key: access_logs.s3.enabled
-      #       Value: !Ref enableAccessLogs
-      #     - !Ref 'AWS::NoValue'
-      #   - !If
-      #     - isEnableAccessLogs
-      #     - Key: access_logs.s3.bucket
-      #       Value: !Ref s3BucketNameForAccessLogs
-      #     - !Ref 'AWS::NoValue'
-      #   - !If
-      #     - isEnableAccessLogs
-      #     - Key: access_logs.s3.prefix
-      #       Value: !Ref prefixOfS3BucketForAccessLogs
-      #     - !Ref 'AWS::NoValue'
+      LoadBalancerAttributes:
+        - !If
+          - isEnableAccessLogs
+          - Key: access_logs.s3.enabled
+            Value: !Ref enableAccessLogs
+          - !Ref 'AWS::NoValue'
+        - !If
+          - isEnableAccessLogs
+          - Key: access_logs.s3.bucket
+            Value: !Ref s3BucketNameForAccessLogs
+          - !Ref 'AWS::NoValue'
+        - !If
+          - isEnableAccessLogs
+          - Key: access_logs.s3.prefix
+            Value: !Ref prefixOfS3BucketForAccessLogs
+          - !Ref 'AWS::NoValue'
       Subnets:
         - !Ref lbSubnetIdA
         - !Ref lbSubnetIdB
@@ -156,52 +160,64 @@ Resources:
           Value: !Ref project
         - Key: environment
           Value: !Ref env
-  # lbHttpsListener:
+  lbHttpsListener:
+    Type: AWS::ElasticLoadBalancingV2::Listener
+    Properties:
+      LoadBalancerArn: !Ref loadBalancer
+      Port: !Ref lbHttpsPort
+      Protocol: !Ref lbHttpsProtocol
+      SslPolicy: !Ref lbHttpsListenerSslPolicy
+      Certificates:
+        - CertificateArn: !Sub arn:aws:acm:${AWS::Region}:${AWS::AccountId}:certificate/${acmCertificateIdentifier}
+      DefaultActions:
+        - Type: !Ref lbActionType
+          TargetGroupArn: !Ref lbHttpsTargetGroup
+  lbHttpListener:
+    Type: "AWS::ElasticLoadBalancingV2::Listener"
+    Properties:
+      LoadBalancerArn: !Ref loadBalancer
+      DefaultActions:
+        - Type: "redirect"
+          RedirectConfig:
+            Protocol: !Ref lbHttpsProtocol
+            Port: !Ref lbHttpsPort
+            Host: "#{host}"
+            Path: "/#{path}"
+            Query: "#{query}"
+            StatusCode: !Ref statusCode
+      Port: !Ref lbHttpPort
+      Protocol: !Ref lbHttpProtocol
+  # lbHttpListener:
   #   Type: AWS::ElasticLoadBalancingV2::Listener
   #   Properties:
   #     LoadBalancerArn: !Ref loadBalancer
-  #     Port: !Ref lbHttpsPort
-  #     Protocol: !Ref lbHttpsProtocol
-  #     SslPolicy: !Ref lbHttpsListenerSslPolicy
-  #     Certificates:
-  #       - !Sub arn:aws:acm:${AWS::Region}:${AWS::AccountId}:certificate/${acmCertificateIdentifier}
+  #     Port: 80 #!Ref lbHttpsPort
+  #     Protocol: HTTP #!Ref lbHttpProtocol
+  #     # SslPolicy: !Ref lbHttpsListenerSslPolicy
+  #     # Certificates:
+  #     #   - !Sub arn:aws:acm:${AWS::Region}:${AWS::AccountId}:certificate/${acmCertificateIdentifier}
   #     DefaultActions:
   #       - Type: !Ref lbActionType
   #         TargetGroupArn: !Ref lbHttpsTargetGroup
-  # lbHttpListener:
-  #   Type: "AWS::ElasticLoadBalancingV2::Listener"
-  #   Properties:
-  #     LoadBalancerArn: !Ref loadBalancer
-  #     DefaultActions:
-  #       - Type: "redirect"
-  #         RedirectConfig:
-  #           Protocol: !Ref lbHttpsProtocol
-  #           Port: !Ref lbHttpsPort
-  #           Host: "#{host}"
-  #           Path: "/#{path}"
-  #           Query: "#{query}"
-  #           StatusCode: !Ref statusCode
-  #     Port: !Ref lbHttpPort
-  #     Protocol: !Ref lbHttpProtocol
   
   lbHttpsTargetGroup:
     Type: AWS::ElasticLoadBalancingV2::TargetGroup
     Properties:
       VpcId: !Ref vpcId
       HealthCheckIntervalSeconds: !Ref healthCheckIntervalSeconds 
-      HealthCheckProtocol: HTTP #!Ref lbHttpsProtocol
+      HealthCheckProtocol: !Ref lbHttpProtocol #!Ref lbHttpsProtocol
       HealthCheckTimeoutSeconds: !Ref healthCheckTimeoutSeconds 
       HealthyThresholdCount:  !Ref healthyThresholdCount 
       UnhealthyThresholdCount: !Ref unHealthyThresholdCount
       Matcher:
         HttpCode: !Ref appCode
       Name: !Sub "${project}-${env}-${app}-lbHttpsTG"
-      Port: 80 #!Ref lbHttpsPort
-      Protocol: HTTP #!Ref lbHttpsProtocol
+      Port: !Ref lbNuxtWebAppPort
+      Protocol: !Ref lbHttpProtocol #!Ref lbHttpsProtocol
       TargetType: !Ref lbTargetType
       TargetGroupAttributes:
         - Key: load_balancing.algorithm.type
-          Value: !Ref loadBalancerMethod 
+          Value: !Ref loadBalancerMethod
       Tags:
         - Key: Name
           Value: !Sub "${project}-${env}-${app}-lbHttpsTargetGroup-${AWS::Region}"
@@ -209,7 +225,7 @@ Resources:
           Value: !Ref project
         - Key: environment
           Value: !Ref env
-  
+
 Outputs:
   loadBalancerArn:
     Value: !Ref loadBalancer
@@ -223,14 +239,14 @@ Outputs:
     Value: !GetAtt loadBalancer.LoadBalancerFullName
     Export:
       Name: !Sub "${project}-${env}-${app}-lbFullName-${AWS::Region}"
-  # lbHttpListener:
-  #   Value: !GetAtt lbHttpListener.ListenerArn
-  #   Export:
-  #     Name: !Sub "${project}-${env}-${app}-lbHttpListener-${AWS::Region}"
-  # lbHttpsListener:
-  #   Value: !GetAtt lbHttpsListener.ListenerArn
-  #   Export:
-  #     Name: !Sub "${project}-${env}-${app}-lbHttpsListener-${AWS::Region}"
+  lbHttpListener:
+    Value: !GetAtt lbHttpListener.ListenerArn
+    Export:
+      Name: !Sub "${project}-${env}-${app}-lbHttpListener-${AWS::Region}"
+  lbHttpsListener:
+    Value: !GetAtt lbHttpsListener.ListenerArn
+    Export:
+      Name: !Sub "${project}-${env}-${app}-lbHttpsListener-${AWS::Region}"
   lbTargetGroupFullName:
     Value: !GetAtt lbHttpsTargetGroup.TargetGroupFullName
     Export:

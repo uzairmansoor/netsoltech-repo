@@ -7,9 +7,13 @@ Parameters:
     Description: Project name
   env:
     Type: String
-    Default: stag
-    AllowedValues: [prod, dev, qa, stag]
+    Default: stage
+    AllowedValues: [prod, dev, qa, stage]
     Description: Environment name
+  app:
+    Type: String
+    Default: app
+    Description: Name of the app
   lambdaFunctionName:
     Type: String
     Description: Name of the lambda function
@@ -43,21 +47,21 @@ Parameters:
   scaleInPolicyName:
     Type: String
     Description: Name of the scale in step scaling policy
-  freeMemScaleInStepScalingPolicyArn:
-    Type: String
-    Description: Arn of free memory scale in step scaling policy
-  freeMemScaleOutStepScalingPolicyArn:
-    Type: String
-    Description: Arn of free memory scale out step scaling policy
+  # freeMemScaleInStepScalingPolicyArn:
+  #   Type: String
+  #   Description: Arn of free memory scale in step scaling policy
+  # freeMemScaleOutStepScalingPolicyArn:
+  #   Type: String
+  #   Description: Arn of free memory scale out step scaling policy
   snsTopicArn:
     Type: String
     Description: ARN of the SNS topic to which the notifications will be sent
   amiIdParamStoreName:
     Type: String
     Description: Name of an AMI ID parameter store
-  dBInstanceName:
-    Type: String
-    Description: Name of an RDS instance
+  # dBInstanceName:
+  #   Type: String
+  #   Description: Name of an RDS instance
 
 Resources:
   lambdaFunction:
@@ -76,17 +80,17 @@ Resources:
           instanceIdsParamStore: !Ref instanceIdsParamStore
           asgName: !Ref asgName
           scaleInPolicyName: !Ref scaleInPolicyName
-          freeMemScaleInStepScalingPolicyArn: !Ref freeMemScaleInStepScalingPolicyArn
-          freeMemScaleOutStepScalingPolicyArn: !Ref freeMemScaleOutStepScalingPolicyArn
+          # freeMemScaleInStepScalingPolicyArn: !Ref freeMemScaleInStepScalingPolicyArn
+          # freeMemScaleOutStepScalingPolicyArn: !Ref freeMemScaleOutStepScalingPolicyArn
           snsTopicArn: !Ref snsTopicArn
           amiIdParamStoreName: !Ref amiIdParamStoreName
-          dBInstanceName: !Ref dBInstanceName
+          # dBInstanceName: !Ref dBInstanceName
       Code:
         S3Bucket: !Ref s3BucketName
         S3Key: !Ref s3Key
       Tags:
           - Key: Name
-            Value: !Sub ${project}-${env}-customAlarmsLambdaFunction
+            Value: !Sub ${project}-${env}-${app}-customAlarmsLambdaFunction
           - Key: project
             Value: !Ref project
           - Key: env

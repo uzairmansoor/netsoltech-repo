@@ -11,6 +11,10 @@ Parameters:
     Default: stage
     AllowedValues: [prod, dev, qa, stage]
     Description:  Environment Name
+  app:
+    Type: String
+    Default: app
+    Description: Name of the app
   lowEc2DiskUtilizationAlarmName:
     Type: String
     Description:  Name of low EC2 custom disk space utilization cloudwatch alarm
@@ -48,15 +52,15 @@ Parameters:
   snsTopicArn:
     Type: String
     Description: Arn of SNS topic
-  snsTopicForTriggerScaleInAsgLambdaFuncArn:
-    Type: String
-    Description: Arn of SNS topic that will trigger scale in autoscaling group lambda function
-  freeMemScaleInStepScalingPolicyArn:
-    Type: String
-    Description: Arn of free memory scale in step scaling policy
-  freeMemScaleOutStepScalingPolicyArn:
-    Type: String
-    Description: Arn of free memory scale out step scaling policy
+  # snsTopicForTriggerScaleInAsgLambdaFuncArn:
+  #   Type: String
+  #   Description: Arn of SNS topic that will trigger scale in autoscaling group lambda function
+  # freeMemScaleInStepScalingPolicyArn:
+  #   Type: String
+  #   Description: Arn of free memory scale in step scaling policy
+  # freeMemScaleOutStepScalingPolicyArn:
+  #   Type: String
+  #   Description: Arn of free memory scale out step scaling policy
   freeMemoryStatisticPeriod:
     Type: Number  
     Description: Time period over which the EC2 statistic applied
@@ -79,9 +83,9 @@ Parameters:
     Type: String
     AllowedValues: [Average,Maximum,Minimum,Sum]
     Description:  Statistic for EC2 free memory cloudwatch alarm
-  ec2FreeMemScaleInAlarmName:
-    Type: String
-    Description:  Name of EC2 free memory cloudwatch alarm for scale in an EC2
+  # ec2FreeMemScaleInAlarmName:
+  #   Type: String
+  #   Description:  Name of EC2 free memory cloudwatch alarm for scale in an EC2
   lowEc2FreeMemoryAlarmName:
     Type: String
     Description:  Name of low EC2 free memory cloudwatch alarm
@@ -213,7 +217,7 @@ Resources:
       EvaluationPeriods: !Ref freeMemoryEvaluationPeriod
       Threshold: !Ref mediumfreeMemoryThresholdValue
       AlarmActions:
-        - !Ref freeMemScaleOutStepScalingPolicyArn
+        # - !Ref freeMemScaleOutStepScalingPolicyArn
         - !Ref snsTopicArn
       Dimensions:
         - Name: AutoScalingGroupName
@@ -238,24 +242,24 @@ Resources:
           Value: !Ref asgName
       ComparisonOperator: LessThanOrEqualToThreshold
   
-  ec2FreeMemScaleInAlarm:
-    Type: AWS::CloudWatch::Alarm
-    Properties:
-      AlarmName: !Sub "${project}-${env}-${app}-${ec2FreeMemScaleInAlarmName}-${AWS::Region}"
-      AlarmDescription: !Sub "Trigger alarm when ${project} ${env} EC2 free memory is greater than ${ec2FreeMemScaleInThresholdValue}"
-      MetricName: !Ref freeMemoryMetricName
-      Namespace: !Ref cloudWebCustomMetricsNamespace
-      Statistic: !Ref freeMemoryStatistic
-      Period: !Ref freeMemoryStatisticPeriod
-      EvaluationPeriods: !Ref freeMemoryEvaluationPeriod
-      Threshold: !Ref ec2FreeMemScaleInThresholdValue
-      AlarmActions:
-        - !Ref freeMemScaleInStepScalingPolicyArn
-        - !Ref snsTopicForTriggerScaleInAsgLambdaFuncArn
-      Dimensions:
-        - Name: AutoScalingGroupName
-          Value: !Ref asgName
-      ComparisonOperator: GreaterThanOrEqualToThreshold
+  # ec2FreeMemScaleInAlarm:
+  #   Type: AWS::CloudWatch::Alarm
+  #   Properties:
+  #     AlarmName: !Sub "${project}-${env}-${app}-${ec2FreeMemScaleInAlarmName}-${AWS::Region}"
+  #     AlarmDescription: !Sub "Trigger alarm when ${project} ${env} EC2 free memory is greater than ${ec2FreeMemScaleInThresholdValue}"
+  #     MetricName: !Ref freeMemoryMetricName
+  #     Namespace: !Ref cloudWebCustomMetricsNamespace
+  #     Statistic: !Ref freeMemoryStatistic
+  #     Period: !Ref freeMemoryStatisticPeriod
+  #     EvaluationPeriods: !Ref freeMemoryEvaluationPeriod
+  #     Threshold: !Ref ec2FreeMemScaleInThresholdValue
+  #     AlarmActions:
+  #       - !Ref freeMemScaleInStepScalingPolicyArn
+  #       - !Ref snsTopicForTriggerScaleInAsgLambdaFuncArn
+  #     Dimensions:
+  #       - Name: AutoScalingGroupName
+  #         Value: !Ref asgName
+  #     ComparisonOperator: GreaterThanOrEqualToThreshold
 
 Outputs:
   lowEc2DiskUtilizationAlarm:
@@ -282,7 +286,7 @@ Outputs:
     Value: !Ref highEc2FreeMemoryAlarm
     Export:
       Name: !Sub "${project}-${env}-${app}-highEc2FreeMemoryAlarmName-${AWS::Region}"
-  ec2FreeMemScaleInAlarm:
-    Value: !Ref ec2FreeMemScaleInAlarm
-    Export:
-      Name: !Sub "${project}-${env}-${app}-ec2FreeMemScaleInAlarmName-${AWS::Region}"
+  # ec2FreeMemScaleInAlarm:
+  #   Value: !Ref ec2FreeMemScaleInAlarm
+  #   Export:
+  #     Name: !Sub "${project}-${env}-${app}-ec2FreeMemScaleInAlarmName-${AWS::Region}"

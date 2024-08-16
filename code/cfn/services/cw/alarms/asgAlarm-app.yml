@@ -10,6 +10,10 @@ Parameters:
     Default: stage
     AllowedValues: [prod, dev, qa, stage]
     Description:  Environment Name
+  app:
+    Type: String
+    Default: app
+    Description: Name of the app
   snsTopicArn: 
     Type: String
     Description: Arn of SNS topic 
@@ -109,9 +113,9 @@ Parameters:
   asgCpuScaleInAlarmName:
     Type: String
     Description: Name of the ASG cpu scale in alarm
-  snsTopicForTriggerScaleInAsgLambdaFuncArn:
-    Type: String
-    Description: Arn of SNS topic that will trigger scale in autoscaling group lambda function
+  # snsTopicForTriggerScaleInAsgLambdaFuncArn:
+  #   Type: String
+  #   Description: Arn of SNS topic that will trigger scale in autoscaling group lambda function
   cpuScaleInStepScalingPolicyArn:
     Type: String
     Description: Arn of cpu scale in step scaling policy
@@ -188,7 +192,7 @@ Resources:
       Threshold: !Ref scaleInCpuThresholdValue
       AlarmActions:
         - !Ref cpuScaleInStepScalingPolicyArn
-        - !Ref snsTopicForTriggerScaleInAsgLambdaFuncArn
+        # - !Ref snsTopicForTriggerScaleInAsgLambdaFuncArn
       Dimensions:
         - Name: AutoScalingGroupName
           Value: !Ref asgName

@@ -10,6 +10,10 @@ Parameters:
     Default: stage
     AllowedValues: [prod, dev, qa, stage]
     Description:  Environment Name
+  app:
+    Type: String
+    Default: app
+    Description: Name of the app
   newBackupVault:
     Type: String
     Default: true
